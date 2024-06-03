@@ -37,7 +37,8 @@ def handle_echo(data):
 
 
 def handle_user_agent(parsed_data):
-    return ""
+    parsed = parsed_data[-1].rstrip("\r\n")
+    return build_http_req(parsed)
 
 
 def build_http_req(msg):
