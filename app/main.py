@@ -19,10 +19,14 @@ def main():
 
 def route_req(conn, parsed_data):
     parsed_data = parsed_data.split(" ")
+    print("parsed data:")
+    print(parsed_data)
     if parsed_data[1] == "/":
         conn.sendall(build_http_req("OK").encode())
     elif parsed_data[1].startswith("/echo"):
         conn.sendall(handle_echo(parsed_data[1]).encode())
+    elif parsed_data[1].startswith("/user-agent"):
+        conn.sendall(handle_user_agent(parsed_data).encode())
     else:
         conn.sendall(HTTP_404_NOT_FOUND.encode())
 
@@ -30,6 +34,10 @@ def route_req(conn, parsed_data):
 def handle_echo(data):
     parsed = data.split("/")
     return build_http_req(parsed[2])
+
+
+def handle_user_agent(parsed_data):
+    return ""
 
 
 def build_http_req(msg):
