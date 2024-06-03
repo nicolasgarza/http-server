@@ -1,5 +1,8 @@
 import socket
 
+HTTP_400_BAD_REQUEST = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 11\r\n\r\nBad Request"
+HTTP_404_NOT_FOUND = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found"
+
 
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -11,13 +14,26 @@ def main():
     data = conn.recv(1024).decode()
     print("recieved: " + data)
 
-    parsed = data.split(" ")[1]
-    print("parsed: " + parsed)
+    route_req(conn, data)
 
-    if parsed == "/":
-        conn.sendall("HTTP/1.1 200 OK\r\n\r\n".encode())
+
+def route_req(conn, parsed_data):
+    parsed_data = parsed_data.split(" ")
+    if parsed_data[1] == "/":
+        conn.sendall(build_http_req("OK").encode())
+    elif parsed_data[1].startswith("/echo"):
+        conn.sendall(handle_echo(parsed_data[1]).encode())
     else:
-        conn.sendall("HTTP/1.1 404 Not Found\r\n\r\n".encode())
+        conn.sendall(HTTP_404_NOT_FOUND.encode())
+
+
+def handle_echo(data):
+    parsed = data.split("/")
+    return build_http_req(parsed[2])
+
+
+def build_http_req(msg):
+    return f"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {len(msg)}\r\n\r\n{msg}"
 
 
 if __name__ == "__main__":
