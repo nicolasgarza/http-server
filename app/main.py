@@ -31,8 +31,8 @@ def route_req(conn, parsed_data):
         conn.sendall(HTTP_404_NOT_FOUND.encode())
 
 
-def handle_echo(data):
-    parsed = data.split("/")
+def handle_echo(parsed_data):
+    parsed = parsed_data.split("/")
     return build_http_req(parsed[2])
 
 
