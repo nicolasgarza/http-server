@@ -83,7 +83,7 @@ def handle_get_file(file_path):
 
 def handle_post_file(parsed_data):
     global file_dir
-    path = os.path.join(file_dir, parsed_data.split(" ")[1].lstrip("/files"))
+    path = os.path.join(file_dir, parsed_data.split(" ")[1][len("/files") :])
     print("target file path", path)
     print("data to work with: " + repr(parsed_data))
 
