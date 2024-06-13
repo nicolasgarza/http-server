@@ -102,16 +102,19 @@ class HTTPRequestHandler:
     def handle_compressed_echo(self, raw_data):
         lines = raw_data.split("\r\n")
         logging.debug(f"Lines: {lines}")
-        accept_encoding = None
+        accept_encoding, encodings = None, []
         for line in lines:
-            if line.startswith("Accept-Encoding:"):
+            if line.lower().startswith("Accept-Encoding:"):
                 accept_encoding = line.split(":", 1)[1].strip()
-                logging.debug(f"Accept-Encoding: {accept_encoding}")
+                encodings = [enc.strip() for enc in accept_encoding.split(",")]
+                logging.debug(f"Accept-Encodings: {accept_encoding}")
                 break
 
         headers = {"Content-Type": "text/plain"}
-        if accept_encoding and accept_encoding in VALID_ENCODINGS:
-            headers["Content-Encoding"] = accept_encoding
+        for encoding in encodings:
+            if encoding and encoding.strip() in VALID_ENCODINGS:
+                headers["Content-Encoding"] = encoding
+                break
 
         return self.build_http_req("200", "OK", "foo", headers=headers)
 
