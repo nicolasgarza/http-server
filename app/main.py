@@ -7,6 +7,8 @@ HTTP_400_BAD_REQUEST = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n
 HTTP_404_NOT_FOUND = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found"
 VALID_ENCODINGS = {"gzip"}
 
+print("System args:")
+print(sys.argv)
 file_dir = sys.argv[-1]
 
 
