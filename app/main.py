@@ -3,6 +3,8 @@ import threading
 import sys
 import logging
 import os.path
+import gzip
+import io
 
 HTTP_400_BAD_REQUEST = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: 11\r\n\r\nBad Request"
 HTTP_404_NOT_FOUND = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found"
@@ -36,7 +38,7 @@ class HTTPRequestHandler:
             if "Accept-Encoding" not in raw_data:
                 conn.sendall(self.handle_echo(path).encode())
             else:
-                conn.sendall(self.handle_compressed_echo(raw_data).encode())
+                conn.sendall(self.handle_compressed_echo(raw_data))
 
         elif path.startswith("/user-agent"):
             conn.sendall(self.handle_user_agent(parsed_data).encode())
@@ -102,8 +104,12 @@ class HTTPRequestHandler:
     def handle_compressed_echo(self, raw_data):
         lines = raw_data.split("\r\n")
         logging.debug(f"Lines: {lines}")
-        accept_encoding, encodings = None, []
+        accept_encoding, encodings, data = None, [], ""
         for line in lines:
+            if line.lower().startswith("get"):
+                parsed = line.split(" ")[1]
+                logging.debug(f"Parsed get route: {parsed}")
+                data = parsed.split("/")[2]
             if line.lower().startswith("accept-encoding:"):
                 accept_encoding = line.split(":", 1)[1].strip()
                 encodings = [enc.strip() for enc in accept_encoding.split(",")]
@@ -111,12 +117,33 @@ class HTTPRequestHandler:
                 break
 
         headers = {"Content-Type": "text/plain"}
+        is_compressed = False
         for encoding in encodings:
             if encoding and encoding.strip() in VALID_ENCODINGS:
+                data = gzip_encode(data)
                 headers["Content-Encoding"] = encoding
+                is_compressed = True
                 break
 
-        return self.build_http_req("200", "OK", "foo", headers=headers)
+        # Ensure data is always bytes
+        if isinstance(data, str):
+            data = data.encode("utf-8")
+        elif not isinstance(data, bytes):
+            data = b""
+
+        # Build the initial part of the HTTP response
+        if not is_compressed:
+            response = self.build_http_req(
+                "200", "OK", data.decode("utf-8"), headers=headers
+            ).encode()
+        else:
+            headers_str = "\r\n".join(
+                f"{key}: {value}" for key, value in headers.items()
+            )
+            initial_part = f"HTTP/1.1 200 OK\r\n{headers_str}\r\nContent-Length: {len(data)}\r\n\r\n"
+            response = initial_part.encode() + data
+
+        return response
 
     def build_http_req(self, code, reason, msg, headers=None):
         if headers is None:
@@ -125,6 +152,13 @@ class HTTPRequestHandler:
             f"{key}: {value}" for key, value in headers.items()
         )
         return f"HTTP/1.1 {code} {reason}\r\n{optional_headers}\r\nContent-Length: {len(msg)}\r\n\r\n{msg}"
+
+
+def gzip_encode(data):
+    buf = io.BytesIO()
+    with gzip.GzipFile(fileobj=buf, mode="wb") as f:
+        f.write(data.encode("utf-8"))
+    return buf.getvalue()
 
 
 def main():
