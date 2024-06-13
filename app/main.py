@@ -8,8 +8,9 @@ HTTP_404_NOT_FOUND = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nCont
 VALID_ENCODINGS = {"gzip"}
 
 print("System args:")
-print(sys.argv)
-file_dir = sys.argv[-1]
+sys_args = sys.argv
+print(sys_args)
+file_dir = sys_args[-1]
 
 
 def main():
@@ -68,7 +69,12 @@ def handle_user_agent(parsed_data):
 
 def handle_get_file(file_path):
     global file_dir
-    path = f"{file_dir}{file_path[len('/files'):]}"
+
+    if file_path.startswith("/files"):
+        path = f"{file_dir}{file_path[len('/files'):]}"
+    else:
+        path = f"{file_dir}{file_path}"
+
     print("target file path:", path)
     if not os.path.isfile(path):
         print("file does not exist")
@@ -83,7 +89,8 @@ def handle_get_file(file_path):
 
 def handle_post_file(parsed_data):
     global file_dir
-    path = os.path.join(file_dir, parsed_data.split(" ")[1][len("/files") :])
+    relative_path = parsed_data.split(" ")[1]
+    path = f"{file_dir}{relative_path[len('/files'):]}"
     print("target file path", path)
     print("data to work with: " + repr(parsed_data))
 
