@@ -141,6 +141,8 @@ class HTTPRequestHandler:
                 f"{key}: {value}" for key, value in headers.items()
             )
             initial_part = f"HTTP/1.1 200 OK\r\n{headers_str}\r\nContent-Length: {len(data)}\r\n\r\n"
+
+            # concatenate both parts
             response = initial_part.encode() + data
 
         return response
