@@ -104,7 +104,7 @@ class HTTPRequestHandler:
         logging.debug(f"Lines: {lines}")
         accept_encoding, encodings = None, []
         for line in lines:
-            if line.lower().startswith("Accept-Encoding:"):
+            if line.lower().startswith("accept-encoding:"):
                 accept_encoding = line.split(":", 1)[1].strip()
                 encodings = [enc.strip() for enc in accept_encoding.split(",")]
                 logging.debug(f"Accept-Encodings: {accept_encoding}")
